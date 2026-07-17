@@ -1,5 +1,8 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Editor from '@monaco-editor/react'
+import * as Y from 'yjs'
+import { HocuspocusProvider } from '@hocuspocus/provider'
+import { MonacoBinding } from 'y-monaco'
 
 const LANGUAGES = [
   { label: 'Python', value: 'python', starter: '# Write your Python code here\n\ndef main():\n    print("Hello, World!")\n\nmain()' },
@@ -8,18 +11,70 @@ const LANGUAGES = [
   { label: 'Java', value: 'java', starter: 'public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}' },
 ]
 
+const ROOM_NAME = 'room-abc123' // TODO: generate/read this dynamically later (Milestone 6 territory)
+
 function App() {
   const [language, setLanguage] = useState(LANGUAGES[0])
-  const [code, setCode] = useState(LANGUAGES[0].starter)
+  const [connected, setConnected] = useState(false)
+
+  // Refs, not state — these are long-lived objects (doc, provider, binding),
+  // not values that should trigger a re-render when they change.
+  const ydocRef = useRef(null)
+  const providerRef = useRef(null)
+  const bindingRef = useRef(null)
+
+  // Create the Yjs doc + Hocuspocus connection ONCE when the app mounts.
+  useEffect(() => {
+    const ydoc = new Y.Doc()
+    const provider = new HocuspocusProvider({
+      url: 'ws://localhost:1234',
+      name: ROOM_NAME,
+      document: ydoc,
+      onConnect: () => setConnected(true),
+      onDisconnect: () => setConnected(false),
+    })
+
+    ydocRef.current = ydoc
+    providerRef.current = provider
+
+    // Cleanup when App unmounts: tear down in reverse order of creation.
+    return () => {
+      bindingRef.current?.destroy()
+      provider.destroy()
+      ydoc.destroy()
+    }
+  }, [])
+
+  // Called by @monaco-editor/react once the actual Monaco editor instance exists.
+  // This is where we bind Yjs to the editor's text model.
+  const handleEditorMount = (editor) => {
+    const ydoc = ydocRef.current
+    const provider = providerRef.current
+
+    // getText('monaco') creates (or reuses) a shared text type inside the doc,
+    // named 'monaco'. Every client connecting to the same room + same name
+    // shares this same text.
+    const ytext = ydoc.getText('monaco')
+
+    const binding = new MonacoBinding(
+      ytext,
+      editor.getModel(),
+      new Set([editor]),
+      provider.awareness, // powers live cursors later (Milestone 3) — harmless to pass now
+    )
+
+    bindingRef.current = binding
+  }
 
   const handleLanguageChange = (lang) => {
     setLanguage(lang)
-    setCode(lang.starter)
+    // Content is no longer reset here — see explanation above.
+    // Only the syntax-highlighting language changes for now.
   }
 
   return (
     <div className="flex flex-col h-screen bg-[#1e1e1e] text-[#d4d4d4]">
-      
+
       {/* Header */}
       <div className="flex items-center justify-between px-4 h-11 bg-[#2d2d2d] border-b border-[#3e3e3e] flex-shrink-0">
         <div className="flex items-center gap-3">
@@ -28,7 +83,11 @@ function App() {
           </div>
           <span className="text-sm font-medium text-[#d4d4d4]">CollabCode</span>
           <span className="text-[#555] text-sm">•</span>
-          <span className="text-sm text-[#888]">room-abc123</span>
+          <span className="text-sm text-[#888]">{ROOM_NAME}</span>
+          <span
+            className={`w-1.5 h-1.5 rounded-full ${connected ? 'bg-green-500' : 'bg-red-500'}`}
+            title={connected ? 'Connected' : 'Disconnected'}
+          />
         </div>
 
         <div className="flex items-center gap-2">
@@ -64,8 +123,7 @@ function App() {
         <Editor
           height="100%"
           language={language.value}
-          value={code}
-          onChange={(val) => setCode(val || '')}
+          onMount={handleEditorMount}
           theme="vs-dark"
           options={{
             fontSize: 14,
