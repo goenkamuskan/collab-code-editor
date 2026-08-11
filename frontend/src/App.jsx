@@ -11,7 +11,7 @@ const LANGUAGES = [
   { label: 'Java', value: 'java', starter: 'public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}' },
 ]
 
-const ROOM_NAME = 'room-abc123' // TODO: generate/read this dynamically later (Milestone 6 territory)
+const ROOM_NAME = 'room-test1' // TODO: generate/read this dynamically later (Milestone 6 territory)
 
 function App() {
   const [language, setLanguage] = useState(LANGUAGES[0])
@@ -22,29 +22,46 @@ function App() {
   const ydocRef = useRef(null)
   const providerRef = useRef(null)
   const bindingRef = useRef(null)
+  const languageRef = useRef(language)
+
 
   // Create the Yjs doc + Hocuspocus connection ONCE when the app mounts.
   useEffect(() => {
-    const ydoc = new Y.Doc()
-    const provider = new HocuspocusProvider({
-      url: 'ws://localhost:1234',
-      name: ROOM_NAME,
-      document: ydoc,
-      onConnect: () => setConnected(true),
-      onDisconnect: () => setConnected(false),
-    })
+    languageRef.current = language
+  }, [language])
 
-    ydocRef.current = ydoc
-    providerRef.current = provider
+  useEffect(() => {
+  const ydoc = new Y.Doc()
+  const provider = new HocuspocusProvider({
+    url: 'ws://localhost:1234',
+    name: ROOM_NAME,
+    document: ydoc,
+    onConnect: () => setConnected(true),
+    onDisconnect: () => setConnected(false),
+  })
 
-    // Cleanup when App unmounts: tear down in reverse order of creation.
-    return () => {
-      bindingRef.current?.destroy()
-      provider.destroy()
-      ydoc.destroy()
+  const randomColor = `hsl(${Math.floor(Math.random() * 360)}, 70%, 60%)`
+  provider.awareness.setLocalStateField('user', {
+    name: `User-${Math.floor(Math.random() * 1000)}`,
+    color: randomColor,
+  })
+
+  provider.on('synced', () => {
+    const ytext = ydoc.getText('monaco')
+    if (ytext.length === 0) {
+      ytext.insert(0, languageRef.current.starter)
     }
-  }, [])
+  })
 
+  ydocRef.current = ydoc
+  providerRef.current = provider
+
+  return () => {
+    bindingRef.current?.destroy()
+    provider.destroy()
+    ydoc.destroy()
+  }
+}, [])
   // Called by @monaco-editor/react once the actual Monaco editor instance exists.
   // This is where we bind Yjs to the editor's text model.
   const handleEditorMount = (editor) => {
