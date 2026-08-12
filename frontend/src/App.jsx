@@ -4,6 +4,9 @@ import * as Y from 'yjs'
 import { HocuspocusProvider } from '@hocuspocus/provider'
 import { MonacoBinding } from 'y-monaco'
 import { runCode } from './utils/piston'
+import { supabase } from './lib/supabase'
+import Auth from './components/Auth'
+import Lobby from './components/Lobby'
 
 const LANGUAGES = [
   { label: 'Python', value: 'python', starter: '# Write your Python code here\n\ndef main():\n    print("Hello, World!")\n\nmain()' },
@@ -12,13 +15,15 @@ const LANGUAGES = [
   { label: 'Java', value: 'java', starter: 'public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}' },
 ]
 
-const ROOM_NAME = 'room-test1'
-
 function App() {
   const [language, setLanguage] = useState(LANGUAGES[0])
   const [connected, setConnected] = useState(false)
   const [files, setFiles] = useState({})       // { fileId: { name, language } }
   const [activeFileId, setActiveFileId] = useState(null)
+  const [user, setUser] = useState(null)
+  const [authLoading, setAuthLoading] = useState(true)
+  const [roomId, setRoomId] = useState(null)
+
 
   const languageRef = useRef(language)
   const ydocRef = useRef(null)
@@ -35,13 +40,26 @@ function App() {
   useEffect(() => {
     languageRef.current = language
   }, [language])
+  
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null)
+      setAuthLoading(false)
+    })
 
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+     setUser(session?.user ?? null)
+    })
+
+    return () => listener.subscription.unsubscribe()
+  }, [])
   // Connect once
   useEffect(() => {
+    if (!roomId) return
     const ydoc = new Y.Doc()
     const provider = new HocuspocusProvider({
       url: 'ws://localhost:1234',
-      name: ROOM_NAME,
+      name: roomId,
       document: ydoc,
       onConnect: () => setConnected(true),
       onDisconnect: () => setConnected(false),
@@ -83,8 +101,20 @@ function App() {
       provider.destroy()
       ydoc.destroy()
     }
-  }, [])
+  }, [roomId])
+  const [roomName, setRoomName] = useState('')
 
+useEffect(() => {
+  if (!roomId) return
+  supabase
+    .from('rooms')
+    .select('name')
+    .eq('id', roomId)
+    .single()
+    .then(({ data }) => {
+      if (data) setRoomName(data.name)
+    })
+}, [roomId])
   // Rebind editor whenever the active file changes
   useEffect(() => {
     if (!activeFileId || !editorRef.current || !ydocRef.current) return
@@ -142,6 +172,9 @@ function App() {
     setRunning(false)
   }
 }
+  if (authLoading) return <div className="h-screen bg-[#1e1e1e]" />
+  if (!user) return <Auth onAuth={setUser} />
+  if (!roomId) return <Lobby user={user} onEnterRoom={setRoomId} />
 
   return (
     <div className="flex h-screen bg-[#1e1e1e] text-[#d4d4d4]">
@@ -177,7 +210,7 @@ function App() {
             </div>
             <span className="text-sm font-medium text-[#d4d4d4]">CollabCode</span>
             <span className="text-[#555] text-sm">•</span>
-            <span className="text-sm text-[#888]">{ROOM_NAME}</span>
+            <span className="text-sm text-[#888]">{roomName}</span>
             <span
               className={`w-1.5 h-1.5 rounded-full ${connected ? 'bg-green-500' : 'bg-red-500'}`}
               title={connected ? 'Connected' : 'Disconnected'}
