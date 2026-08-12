@@ -3,6 +3,7 @@ import Editor from '@monaco-editor/react'
 import * as Y from 'yjs'
 import { HocuspocusProvider } from '@hocuspocus/provider'
 import { MonacoBinding } from 'y-monaco'
+import { runCode } from './utils/piston'
 
 const LANGUAGES = [
   { label: 'Python', value: 'python', starter: '# Write your Python code here\n\ndef main():\n    print("Hello, World!")\n\nmain()' },
@@ -25,6 +26,11 @@ function App() {
   const bindingRef = useRef(null)
   const editorRef = useRef(null)
   const yFilesRef = useRef(null)
+
+  const [output, setOutput] = useState('')
+  const [running, setRunning] = useState(false)
+  const [editorReady, setEditorReady] = useState(false)
+
 
   useEffect(() => {
     languageRef.current = language
@@ -99,10 +105,11 @@ function App() {
       new Set([editorRef.current]),
       providerRef.current.awareness,
     )
-  }, [activeFileId, files])
+  }, [activeFileId, files,editorReady])
 
   const handleEditorMount = (editor) => {
     editorRef.current = editor
+    setEditorReady(true)
   }
 
   const handleNewFile = () => {
@@ -117,6 +124,24 @@ function App() {
     yFiles.set(id, { name, language: lang })
     setActiveFileId(id)
   }
+
+  const handleRun = async () => {
+  if (!activeFileId) return
+  const ytext = ydocRef.current.getText(`file:${activeFileId}`)
+  const code = ytext.toString()
+  const fileMeta = files[activeFileId]
+
+  setRunning(true)
+  setOutput('Running...')
+  try {
+    const result = await runCode(fileMeta.language, code)
+    setOutput(result.run.output || result.run.stderr || '(no output)')
+  } catch (err) {
+    setOutput(`Error: ${err.message}`)
+  } finally {
+    setRunning(false)
+  }
+}
 
   return (
     <div className="flex h-screen bg-[#1e1e1e] text-[#d4d4d4]">
@@ -160,32 +185,42 @@ function App() {
           </div>
 
           <div className="flex items-center gap-2">
-            <button className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-medium rounded transition-colors">
-              <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
-                <path d="M2 1l7 4-7 4V1z"/>
-              </svg>
-              Run
-            </button>
+            <button
+  onClick={handleRun}
+  disabled={running}
+  className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white text-xs font-medium rounded transition-colors"
+>
+  <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+    <path d="M2 1l7 4-7 4V1z"/>
+  </svg>
+  {running ? 'Running...' : 'Run'}
+</button>
           </div>
         </div>
 
         {/* Editor */}
-        <div className="flex-1 overflow-hidden">
-          <Editor
-            height="100%"
-            language={language.value}
-            onMount={handleEditorMount}
-            theme="vs-dark"
-            options={{
-              fontSize: 14,
-              minimap: { enabled: false },
-              scrollBeyondLastLine: false,
-              automaticLayout: true,
-              padding: { top: 16 },
-              fontFamily: 'JetBrains Mono, Fira Code, Consolas, monospace',
-            }}
-          />
-        </div>
+<div className="flex-1 overflow-hidden flex flex-col">
+  <div className="flex-1 min-h-0">
+    <Editor
+      height="100%"
+      language={language.value}
+      onMount={handleEditorMount}
+      theme="vs-dark"
+      options={{
+        fontSize: 14,
+        minimap: { enabled: false },
+        scrollBeyondLastLine: false,
+        automaticLayout: true,
+        padding: { top: 16 },
+        fontFamily: 'JetBrains Mono, Fira Code, Consolas, monospace',
+      }}
+    />
+  </div>
+  <div className="h-40 bg-[#1a1a1a] border-t border-[#3e3e3e] p-3 overflow-y-auto flex-shrink-0">
+    <div className="text-xs text-[#666] mb-1 uppercase tracking-wide">Output</div>
+    <pre className="text-sm text-[#d4d4d4] whitespace-pre-wrap font-mono">{output}</pre>
+  </div>
+</div>
       </div>
 
     </div>

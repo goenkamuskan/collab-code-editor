@@ -11,6 +11,8 @@
   "description": "",
   "dependencies": {
     "@hocuspocus/extension-logger": "^4.4.0",
-    "@hocuspocus/server": "^4.4.0"
+    "@hocuspocus/server": "^4.4.0",
+    "cors": "^2.8.6",
+    "express": "^5.2.1"
   }
 }
