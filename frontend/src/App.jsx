@@ -142,6 +142,12 @@ useEffect(() => {
     setEditorReady(true)
   }
 
+  const handleSignOut = async () => {
+  await supabase.auth.signOut()
+  setUser(null)
+  setRoomId(null)
+}
+
   const handleNewFile = () => {
     const name = prompt('File name (e.g. utils.js):')
     if (!name) return
@@ -227,6 +233,12 @@ useEffect(() => {
     <path d="M2 1l7 4-7 4V1z"/>
   </svg>
   {running ? 'Running...' : 'Run'}
+</button>
+<button
+  onClick={handleSignOut}
+  className="text-[#888] hover:text-white text-xs px-2"
+>
+  Sign Out
 </button>
           </div>
         </div>
