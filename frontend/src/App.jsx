@@ -211,8 +211,8 @@ useEffect(() => {
         {/* Header */}
         <div className="flex items-center justify-between px-4 h-11 bg-[#2d2d2d] border-b border-[#3e3e3e] flex-shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-5 h-5 rounded bg-violet-500 flex items-center justify-center">
-              <span className="text-white text-xs font-bold">C</span>
+            <div className="w-5 h-5 rounded bg-[#e8a33d] flex items-center justify-center">
+              <span className="text-[#161616] text-xs font-bold">C</span>
             </div>
             <span className="text-sm font-medium text-[#d4d4d4]">CollabCode</span>
             <span className="text-[#555] text-sm">•</span>

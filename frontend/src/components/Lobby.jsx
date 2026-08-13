@@ -38,41 +38,51 @@ function Lobby({ user, onEnterRoom }) {
   }
 
   return (
-    <div className="h-screen bg-[#1e1e1e] text-[#d4d4d4] flex flex-col items-center pt-20">
-      <h1 className="text-xl font-semibold text-white mb-1">CollabCode</h1>
-      <p className="text-sm text-[#888] mb-8">{user.email}</p>
+    <div className="flex items-center justify-center h-screen bg-[#111111]">
+      <div className="w-[520px] bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl overflow-hidden shadow-2xl">
 
-      <form onSubmit={handleCreateRoom} className="flex gap-2 mb-8">
-        <input
-          type="text"
-          placeholder="New room name"
-          value={newRoomName}
-          onChange={(e) => setNewRoomName(e.target.value)}
-          className="bg-[#3e3e3e] text-white text-sm px-3 py-2 rounded outline-none w-64"
-        />
-        <button
-          type="submit"
-          className="bg-violet-600 hover:bg-violet-700 text-white text-sm px-4 py-2 rounded"
-        >
-          Create
-        </button>
-      </form>
+        {/* Header strip */}
+        <div className="px-8 pt-8 pb-6 border-b border-[#2a2a2a]">
+          <p className="text-[#e8a33d] font-mono text-sm">$ collabcode</p>
+          <p className="text-white text-lg font-medium mt-1">Your rooms</p>
+          <p className="text-[#666] text-xs mt-1">{user.email}</p>
+        </div>
 
-      <div className="w-96">
-        <div className="text-xs text-[#666] uppercase tracking-wide mb-2">Existing Rooms</div>
-        {loading && <p className="text-[#666] text-sm">Loading...</p>}
-        {!loading && rooms.length === 0 && (
-          <p className="text-[#666] text-sm">No rooms yet — create one above.</p>
-        )}
-        {rooms.map((room) => (
-          <div
-            key={room.id}
-            onClick={() => onEnterRoom(room.id)}
-            className="px-3 py-2 mb-1 bg-[#252526] hover:bg-[#2a2d2e] rounded cursor-pointer text-sm"
-          >
-            {room.name}
+        <div className="px-8 py-6">
+          <form onSubmit={handleCreateRoom} className="flex gap-2 mb-6">
+            <input
+              type="text"
+              placeholder="New room name"
+              value={newRoomName}
+              onChange={(e) => setNewRoomName(e.target.value)}
+              className="flex-1 bg-[#232323] border border-[#333] text-white text-sm px-3 py-2 rounded outline-none focus:border-[#e8a33d]"
+            />
+            <button
+              type="submit"
+              className="bg-[#e8a33d] hover:bg-[#d4922f] text-[#161616] text-sm font-medium px-4 py-2 rounded transition-colors"
+            >
+              Create
+            </button>
+          </form>
+
+          <div className="max-h-64 overflow-y-auto flex flex-col gap-1">
+            {loading && <p className="text-[#666] text-sm">Loading...</p>}
+            {!loading && rooms.length === 0 && (
+              <p className="text-[#666] text-sm">No rooms yet — create one above.</p>
+            )}
+            {rooms.map((room) => (
+              <div
+                key={room.id}
+                onClick={() => onEnterRoom(room.id)}
+                className="px-3 py-2.5 bg-[#1f1f1f] hover:bg-[#252525] border border-[#2a2a2a] rounded cursor-pointer text-sm text-[#ccc] hover:text-white transition-colors flex items-center justify-between"
+              >
+                <span>{room.name}</span>
+                <span className="text-[#555] font-mono text-xs">→</span>
+              </div>
+            ))}
           </div>
-        ))}
+        </div>
+
       </div>
     </div>
   )

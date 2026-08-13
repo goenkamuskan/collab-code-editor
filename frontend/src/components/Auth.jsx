@@ -27,43 +27,62 @@ function Auth({ onAuth }) {
   }
 
   return (
-    <div className="flex items-center justify-center h-screen bg-[#1e1e1e]">
-      <form onSubmit={handleSubmit} className="bg-[#252526] p-8 rounded-lg w-80 flex flex-col gap-3">
-        <h1 className="text-lg font-semibold text-white mb-2">
-          {isSignUp ? 'Create an account' : 'Sign in to CollabCode'}
-        </h1>
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="bg-[#3e3e3e] text-white text-sm px-3 py-2 rounded outline-none"
-          required
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="bg-[#3e3e3e] text-white text-sm px-3 py-2 rounded outline-none"
-          required
-        />
-        {error && <p className="text-red-400 text-xs">{error}</p>}
-        <button
-          type="submit"
-          disabled={loading}
-          className="bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white text-sm py-2 rounded transition-colors"
-        >
-          {loading ? '...' : isSignUp ? 'Sign Up' : 'Sign In'}
-        </button>
-        <button
-          type="button"
-          onClick={() => setIsSignUp(!isSignUp)}
-          className="text-[#888] text-xs hover:text-white"
-        >
-          {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
-        </button>
-      </form>
+    <div className="flex items-center justify-center h-screen bg-[#111111]">
+      <div className="flex w-[820px] h-[480px] bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl overflow-hidden shadow-2xl">
+
+        {/* Left panel */}
+        <div className="hidden md:flex flex-col justify-center w-[340px] bg-[#1c1c1c] border-r border-[#2a2a2a] px-10">
+          <p className="text-[#e8a33d] font-mono text-base">$ collabcode</p>
+          <p className="text-[#666] font-mono text-sm mt-1 mb-6">&gt; real-time editor</p>
+          <pre className="text-[#4a4a4a] font-mono text-xs leading-relaxed bg-[#151515] border border-[#2a2a2a] rounded p-4">
+{`def sync():
+    while room.open:
+        yield delta
+        await push()`}
+          </pre>
+        </div>
+
+        {/* Right panel */}
+        <div className="flex-1 flex items-center justify-center px-6">
+          <form onSubmit={handleSubmit} className="w-64 flex flex-col gap-3">
+            <h1 className="text-white text-base font-medium mb-1">
+              {isSignUp ? 'Create an account' : 'Sign in'}
+            </h1>
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="bg-[#232323] border border-[#333] text-white text-sm px-3 py-2 rounded outline-none focus:border-[#e8a33d]"
+              required
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="bg-[#232323] border border-[#333] text-white text-sm px-3 py-2 rounded outline-none focus:border-[#e8a33d]"
+              required
+            />
+            {error && <p className="text-red-400 text-xs">{error}</p>}
+            <button
+              type="submit"
+              disabled={loading}
+              className="bg-[#e8a33d] hover:bg-[#d4922f] disabled:opacity-50 text-[#161616] text-sm font-medium py-2 rounded transition-colors"
+            >
+              {loading ? '...' : isSignUp ? 'Sign Up' : 'Sign In'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsSignUp(!isSignUp)}
+              className="text-[#666] text-xs hover:text-white text-left"
+            >
+              {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+            </button>
+          </form>
+        </div>
+
+      </div>
     </div>
   )
 }
